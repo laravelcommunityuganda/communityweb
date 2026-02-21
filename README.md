@@ -349,7 +349,7 @@ The API is versioned and available at `/api/v1/`. All responses follow this form
 | GET | `/api/v1/admin/settings` | Get platform settings |
 | PUT | `/api/v1/admin/settings` | Update settings |
 
-## 🎛️ Admin Dashboard
+##  Admin Dashboard
 
 The admin dashboard provides comprehensive management tools:
 
@@ -387,7 +387,7 @@ The admin dashboard provides comprehensive management tools:
 - Security settings
 - Maintenance mode control
 
-## 🔐 Default Users
+##  Default Users
 
 After seeding, you can login with:
 
@@ -396,9 +396,9 @@ After seeding, you can login with:
 | Admin | admin@laravelcommunity.ug | password |
 | Moderator | moderator@laravelcommunity.ug | password |
 
-> ⚠️ **Important**: Change these passwords in production!
+>  **Important**: Change these passwords in production!
 
-## 🧪 Testing
+##Testing
 
 ```bash
 # Run all tests
