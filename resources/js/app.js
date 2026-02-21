@@ -1,125 +1,134 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import router from './router';
-import App from './App.vue';
+/**
+ * Frontend JavaScript
+ * This file is for any JavaScript needed on the Blade-based frontend
+ * The dashboard SPA is handled separately in dashboard.js
+ */
+
+// Import Bootstrap JS if needed
 import './bootstrap';
 
-// Import global components
-import BaseButton from '@/components/ui/BaseButton.vue';
-import BaseInput from '@/components/ui/BaseInput.vue';
-import BaseCard from '@/components/ui/BaseCard.vue';
-import BaseModal from '@/components/ui/BaseModal.vue';
-import BaseDropdown from '@/components/ui/BaseDropdown.vue';
-import BaseBadge from '@/components/ui/BaseBadge.vue';
-import BaseAvatar from '@/components/ui/BaseAvatar.vue';
-import BaseTabs from '@/components/ui/BaseTabs.vue';
-import BaseToast from '@/components/ui/BaseToast.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
-import EmptyState from '@/components/ui/EmptyState.vue';
+// Import Alpine.js for lightweight interactivity (optional)
+// import Alpine from 'alpinejs';
+// window.Alpine = Alpine;
+// Alpine.start();
 
-// Create Vue app
-const app = createApp(App);
+// Simple form validation
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide alerts after 5 seconds
+    const alerts = document.querySelectorAll('[id^="toast-"]');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    });
 
-// Use plugins
-app.use(createPinia());
-app.use(router);
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
 
-// Register global components
-app.component('BaseButton', BaseButton);
-app.component('BaseInput', BaseInput);
-app.component('BaseCard', BaseCard);
-app.component('BaseModal', BaseModal);
-app.component('BaseDropdown', BaseDropdown);
-app.component('BaseBadge', BaseBadge);
-app.component('BaseAvatar', BaseAvatar);
-app.component('BaseTabs', BaseTabs);
-app.component('BaseToast', BaseToast);
-app.component('LoadingSpinner', LoadingSpinner);
-app.component('EmptyState', EmptyState);
+    // Form submission loading states
+    const forms = document.querySelectorAll('form[data-loading]');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const button = form.querySelector('button[type="submit"]');
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<span class="loading">Processing...</span>';
+            }
+        });
+    });
 
-// Global properties
-app.config.globalProperties.$filters = {
-    currency(value, currency = 'UGX') {
+    // Confirm delete dialogs
+    const deleteForms = document.querySelectorAll('form[onsubmit*="confirm"]');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const message = form.getAttribute('data-confirm') || 'Are you sure you want to delete this item?';
+            if (!confirm(message)) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Copy to clipboard functionality
+    const copyButtons = document.querySelectorAll('[data-copy]');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const text = button.getAttribute('data-copy');
+            try {
+                await navigator.clipboard.writeText(text);
+                const originalText = button.innerHTML;
+                button.innerHTML = 'Copied!';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        });
+    });
+
+    // Lazy loading images
+    const lazyImages = document.querySelectorAll('img[data-src]');
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+        lazyImages.forEach(img => imageObserver.observe(img));
+    } else {
+        // Fallback for browsers without IntersectionObserver
+        lazyImages.forEach(img => {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+        });
+    }
+});
+
+// Utility functions
+window.utils = {
+    formatNumber(num) {
+        return new Intl.NumberFormat().format(num);
+    },
+    
+    formatDate(date, options = {}) {
+        return new Date(date).toLocaleDateString('en-UG', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            ...options,
+        });
+    },
+    
+    formatCurrency(amount, currency = 'UGX') {
         return new Intl.NumberFormat('en-UG', {
             style: 'currency',
             currency: currency,
-        }).format(value);
+        }).format(amount);
     },
-    number(value) {
-        return new Intl.NumberFormat().format(value);
-    },
-    date(value, options = {}) {
-        return new Date(value).toLocaleDateString('en-UG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            ...options,
-        });
-    },
-    time(value, options = {}) {
-        return new Date(value).toLocaleTimeString('en-UG', {
-            hour: '2-digit',
-            minute: '2-digit',
-            ...options,
-        });
-    },
-    datetime(value, options = {}) {
-        return new Date(value).toLocaleString('en-UG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            ...options,
-        });
-    },
-    relativeTime(value) {
-        const date = new Date(value);
+    
+    relativeTime(date) {
+        const d = new Date(date);
         const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
+        const diffInSeconds = Math.floor((now - d) / 1000);
 
-        if (diffInSeconds < 60) {
-            return 'just now';
-        }
-
-        const diffInMinutes = Math.floor(diffInSeconds / 60);
-        if (diffInMinutes < 60) {
-            return `${diffInMinutes}m ago`;
-        }
-
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) {
-            return `${diffInHours}h ago`;
-        }
-
-        const diffInDays = Math.floor(diffInHours / 24);
-        if (diffInDays < 7) {
-            return `${diffInDays}d ago`;
-        }
-
-        const diffInWeeks = Math.floor(diffInDays / 7);
-        if (diffInWeeks < 4) {
-            return `${diffInWeeks}w ago`;
-        }
-
-        const diffInMonths = Math.floor(diffInDays / 30);
-        if (diffInMonths < 12) {
-            return `${diffInMonths}mo ago`;
-        }
-
-        const diffInYears = Math.floor(diffInDays / 365);
-        return `${diffInYears}y ago`;
-    },
-    truncate(value, length = 100) {
-        if (!value) return '';
-        if (value.length <= length) return value;
-        return value.substring(0, length) + '...';
-    },
-    pluralize(value, count) {
-        if (count === 1) return value;
-        return value + 's';
-    },
+        if (diffInSeconds < 60) return 'just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)}w ago`;
+        if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+        return `${Math.floor(diffInSeconds / 31536000)}y ago`;
+    }
 };
-
-// Mount app
-app.mount('#app');
